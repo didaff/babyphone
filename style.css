@@ -1,0 +1,296 @@
+/* Babyphone PWA — feuille de style commune.
+   Thème sombre par défaut (usage nocturne en chambre d'enfant). */
+
+:root {
+  --bg: #0d0f14;
+  --bg-elevated: #171b24;
+  --text: #eef1f7;
+  --text-dim: #9aa3b2;
+  --accent: #4f7cff;
+  --accent-dark: #2e4fb0;
+  --ok: #2ecc71;
+  --warn: #f5a623;
+  --danger: #e63946;
+  --border: #2a2f3d;
+  --radius: 16px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+body {
+  min-height: 100dvh;
+  padding: calc(16px + var(--safe-top)) calc(16px + var(--safe-right))
+           calc(16px + var(--safe-bottom)) calc(16px + var(--safe-left));
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+a { color: var(--accent); }
+
+h1 { font-size: 1.4rem; margin: 0 0 4px; }
+h2 { font-size: 1.1rem; margin: 0 0 8px; }
+p { line-height: 1.5; color: var(--text-dim); }
+
+.center-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  gap: 20px;
+  max-width: 480px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+/* --- Gros boutons page d'accueil --- */
+.btn-giant {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 28px 16px;
+  border-radius: var(--radius);
+  border: none;
+  background: var(--accent);
+  color: white;
+  font-size: 1.3rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 96px;
+}
+.btn-giant .emoji { font-size: 2rem; }
+.btn-giant:active { background: var(--accent-dark); }
+.btn-giant.secondary {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 1rem;
+  min-height: auto;
+  padding: 14px;
+}
+
+/* --- Boutons standards --- */
+button, .btn {
+  font: inherit;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text);
+  padding: 12px 18px;
+  cursor: pointer;
+}
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: white; }
+.btn-danger { background: var(--danger); border-color: var(--danger); color: white; }
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* --- QR --- */
+.qr-wrap {
+  background: white;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: min(88vw, 380px);
+  aspect-ratio: 1;
+  margin: 0 auto;
+}
+.qr-wrap canvas, .qr-wrap img { width: 100%; height: 100%; }
+
+.qr-scan-wrap {
+  position: relative;
+  width: min(88vw, 380px);
+  aspect-ratio: 1;
+  margin: 0 auto;
+  border-radius: 12px;
+  overflow: hidden;
+  background: black;
+}
+.qr-scan-wrap video { width: 100%; height: 100%; object-fit: cover; }
+.qr-scan-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 10%;
+  border: 3px solid var(--accent);
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+/* --- Vidéo live --- */
+.video-wrap {
+  position: relative;
+  flex: 1;
+  background: black;
+  border-radius: var(--radius);
+  overflow: hidden;
+  min-height: 200px;
+}
+.video-wrap video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.video-wrap.audio-only video { display: none; }
+.video-wrap.audio-only::before {
+  content: "🔊 Écoute audio seule";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+  font-size: 1.1rem;
+}
+
+/* --- Statut connexion --- */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+}
+.status-badge .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--text-dim); }
+.status-badge.ok .dot { background: var(--ok); }
+.status-badge.warn .dot { background: var(--warn); }
+.status-badge.danger .dot { background: var(--danger); }
+
+/* --- Voile noir (mode bébé, écran assombri) --- */
+.veil {
+  position: fixed;
+  inset: 0;
+  background: black;
+  z-index: 50;
+  display: none;
+}
+.veil.active { display: block; }
+.veil-hint {
+  position: absolute;
+  bottom: calc(24px + var(--safe-bottom));
+  left: 0; right: 0;
+  text-align: center;
+  color: #444;
+  font-size: 0.8rem;
+}
+
+/* --- Alarme déconnexion plein écran (mode parent) --- */
+.alarm-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--danger);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+  padding: 24px;
+  animation: alarm-blink 0.6s steps(1) infinite;
+}
+.alarm-fullscreen.active { display: flex; }
+.alarm-fullscreen h2 { font-size: 1.8rem; margin: 0; color: white; }
+.alarm-fullscreen p { color: rgba(255,255,255,0.9); }
+@keyframes alarm-blink {
+  0%, 49% { background: var(--danger); }
+  50%, 100% { background: #7a0d15; }
+}
+
+/* --- Bannière mise à jour --- */
+.update-banner {
+  position: fixed;
+  left: 12px; right: 12px;
+  bottom: calc(12px + var(--safe-bottom));
+  z-index: 80;
+  background: var(--accent);
+  color: white;
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+.update-banner.active { display: flex; }
+.update-banner button { background: white; color: var(--accent-dark); border: none; font-weight: 600; }
+
+/* --- Curseur seuil bruit --- */
+.slider-row { display: flex; flex-direction: column; gap: 6px; }
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+.meter {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+  position: relative;
+}
+.meter > span {
+  display: block;
+  height: 100%;
+  background: var(--ok);
+  width: 0%;
+  transition: width 0.08s linear, background 0.15s linear;
+}
+.meter.over > span { background: var(--danger); }
+
+/* --- Alerte bruit flash (mode parent) --- */
+.flash-noise {
+  position: fixed;
+  inset: 0;
+  background: white;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 60;
+}
+.flash-noise.active { animation: flash 0.35s ease-out; }
+@keyframes flash { 0% { opacity: 0.85; } 100% { opacity: 0; } }
+
+.hint { font-size: 0.85rem; color: var(--text-dim); }
+.stack { display: flex; flex-direction: column; gap: 12px; }
+.row-between { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+
+footer.app-footer {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  padding-bottom: 4px;
+}
+
+@media (min-width: 700px) {
+  .center-page { max-width: 560px; }
+}
