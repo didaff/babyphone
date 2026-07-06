@@ -45,6 +45,13 @@ const QrTransport = (() => {
       margin: 2,
       scale: 6
     });
+    // La lib fixe une taille en dur en style inline (ex: width/height: 462px)
+    // qui déborde de l'écran sur un petit téléphone et empêche de voir le QR
+    // en entier. On la remplace pour laisser le CSS (.qr-wrap canvas) contraindre
+    // le canvas à la largeur du conteneur ; la résolution interne (canvas.width)
+    // reste inchangée, donc le QR reste net.
+    canvas.style.width = '100%';
+    canvas.style.height = 'auto';
     return bytes.length;
   }
 
