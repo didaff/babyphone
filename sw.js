@@ -6,9 +6,9 @@
 // - le nouveau SW s'installe et pré-cache la nouvelle version en arrière-plan
 //   SANS prendre le contrôle immédiatement (pas de self.skipWaiting() ici) ;
 // - la page affiche alors une bannière "nouvelle version disponible"
-//   (js/app.js) ; ce n'est que si l'utilisateur clique "Mettre à jour" que la
+//   (app.js) ; ce n'est que si l'utilisateur clique "Mettre à jour" que la
 //   page envoie {type:'SKIP_WAITING'} et que le nouveau SW prend le relais.
-const SW_VERSION = 'v1';
+const SW_VERSION = 'v2';
 const CACHE_NAME = 'babyphone-' + SW_VERSION;
 
 const PRECACHE_URLS = [
@@ -18,19 +18,19 @@ const PRECACHE_URLS = [
   './parent.html',
   './aide.html',
   './manifest.json',
-  './css/style.css',
-  './js/app.js',
-  './js/config.js',
-  './js/qr-transport.js',
-  './js/webrtc-pairing.js',
-  './js/bebe.js',
-  './js/parent.js',
-  './vendor/pako.min.js',
-  './vendor/qrcode.min.js',
-  './vendor/jsQR.js',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
-  './icons/icon-maskable-512.png'
+  './style.css',
+  './app.js',
+  './config.js',
+  './qr-transport.js',
+  './webrtc-pairing.js',
+  './bebe.js',
+  './parent.js',
+  './pako.min.js',
+  './qrcode.min.js',
+  './jsQR.js',
+  './icon-192.png',
+  './icon-512.png',
+  './icon-maskable-512.png'
 ];
 
 self.addEventListener('install', (event) => {
