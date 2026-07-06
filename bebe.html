@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d0f14">
+<title>Babyphone — Mode Bébé</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="row-between">
+    <a href="index.html" class="btn">← Accueil</a>
+    <span id="status-badge" class="status-badge"><span class="dot"></span><span id="status-text">Initialisation…</span></span>
+  </div>
+
+  <div class="video-wrap">
+    <video id="local-video" autoplay playsinline muted></video>
+  </div>
+
+  <div class="btn-row">
+    <button id="btn-switch-cam" class="btn">🔄 Basculer caméra</button>
+    <button id="btn-quality" class="btn">Qualité : 320p</button>
+  </div>
+
+  <div id="pairing-section" class="card stack">
+    <h2>Appairage</h2>
+    <p class="hint" id="pairing-hint">Préparation de l'offre de connexion…</p>
+    <div id="qr-offer" class="qr-wrap" style="display:none"></div>
+    <button id="btn-scan-answer" class="btn btn-primary" style="display:none">📷 Scanner le QR réponse du parent</button>
+    <button id="btn-restart-pairing" class="btn" style="display:none">↺ Recommencer l'appairage</button>
+  </div>
+
+  <div class="card stack">
+    <h2>Détection de bruit</h2>
+    <div class="slider-row">
+      <label for="noise-threshold" class="hint">Seuil d'alerte : <span id="noise-threshold-value">50</span></label>
+      <input type="range" id="noise-threshold" min="1" max="100" value="50">
+    </div>
+    <div class="meter" id="noise-meter"><span id="noise-meter-fill"></span></div>
+  </div>
+
+  <div class="card">
+    <p class="hint">
+      L'écran s'assombrit après 10 s d'inactivité (le flux continue). Touchez l'écran pour le rallumer.
+      Gardez ce téléphone branché sur secteur.
+    </p>
+  </div>
+
+  <div class="veil" id="veil">
+    <div class="veil-hint">Touchez l'écran pour rallumer — le flux continue</div>
+  </div>
+
+  <div id="update-banner" class="update-banner">
+    <span>Nouvelle version disponible.</span>
+    <button>Mettre à jour</button>
+  </div>
+
+  <script src="vendor/pako.min.js"></script>
+  <script src="vendor/qrcode.min.js"></script>
+  <script src="vendor/jsQR.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/qr-transport.js"></script>
+  <script src="js/webrtc-pairing.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/bebe.js"></script>
+</body>
+</html>

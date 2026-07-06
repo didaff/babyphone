@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d0f14">
+<title>Babyphone — Aide</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="row-between">
+    <a href="index.html" class="btn">← Accueil</a>
+    <h1 style="margin:0;font-size:1.1rem;">Aide</h1>
+  </div>
+
+  <div class="stack">
+
+    <div class="card">
+      <h2>📶 1. Créer le réseau (téléphone bébé)</h2>
+      <p class="hint">
+        Sur le téléphone qui restera près du bébé :<br>
+        <b>Paramètres → Réseau et Internet (ou Connexions) → Point d'accès et partage de connexion → Point d'accès Wi-Fi</b>.
+        Activez-le, notez le nom du réseau et le mot de passe.
+        Le libellé exact varie selon la marque du téléphone (Samsung, Pixel, Xiaomi…) mais le chemin est toujours proche de celui-ci.<br>
+        <b>Branchez ensuite ce téléphone sur secteur</b> : il va tourner en continu, écran allumé, caméra et micro actifs.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>🍼 2. Lancer le Mode Bébé</h2>
+      <p class="hint">
+        Ouvrez l'app sur le téléphone bébé → <b>Mode Bébé</b>. Autorisez l'accès caméra/micro si demandé.
+        Un QR code apparaît : c'est l'offre de connexion.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>📱 3. Connecter le téléphone parent</h2>
+      <p class="hint">
+        Sur le téléphone parent : <b>Wi-Fi → rejoindre le réseau créé à l'étape 1</b>.
+        Android va probablement afficher <i>« Ce réseau n'a pas accès à Internet, se connecter quand même ? »</i>
+        → répondez <b>oui</b> (c'est normal et attendu, le babyphone n'a besoin d'aucun accès Internet).
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>👂 4. Lancer le Mode Parent et scanner</h2>
+      <p class="hint">
+        Ouvrez l'app sur le téléphone parent → <b>Mode Parent</b>. Autorisez l'accès caméra.
+        Scannez le QR affiché par le téléphone bébé (l'offre). Un second QR (la réponse) s'affiche alors sur le
+        téléphone parent : présentez-le à la caméra du téléphone bébé pour finaliser la connexion.
+        Une fois connecté, l'image et le son du bébé s'affichent automatiquement.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>📨 Envoyer l'app à un ami</h2>
+      <p class="hint">
+        Envoyez simplement l'URL de l'app (celle de cette page). Sur le téléphone qui la reçoit, ouvrir le lien
+        puis <b>menu du navigateur → « Ajouter à l'écran d'accueil »</b> : l'app s'installe comme une vraie
+        application et fonctionnera ensuite hors ligne.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>⚠️ Limites à connaître</h2>
+      <p class="hint">
+        • Les deux écrans restent allumés (pas de fonctionnement en arrière-plan dans un navigateur) — le
+        téléphone bébé doit rester branché sur secteur.<br>
+        • Portée = portée du Wi-Fi (même bâtiment/appartement).<br>
+        • Le premier chargement de l'app nécessite Internet une fois, sur chaque téléphone (installations et
+        mises à jour uniquement — jamais pour l'usage courant).<br>
+        • Si le téléphone bébé perd la connexion, le téléphone parent déclenche une <b>alarme sonore forte</b>
+        après 10 secondes sans nouvelle : ne la désactivez pas tant que vous n'avez pas vérifié que tout va bien.
+      </p>
+    </div>
+
+  </div>
+
+  <div id="update-banner" class="update-banner">
+    <span>Nouvelle version disponible.</span>
+    <button>Mettre à jour</button>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

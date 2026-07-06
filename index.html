@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d0f14">
+<title>Babyphone</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="center-page">
+    <div>
+      <h1>👶 Babyphone</h1>
+      <p>Application locale, sans Internet ni serveur. Fonctionne entre deux téléphones Android connectés au même réseau (hotspot ou WiFi).</p>
+    </div>
+
+    <div class="stack">
+      <a href="bebe.html" class="btn-giant"><span class="emoji">🍼</span>Mode Bébé</a>
+      <a href="parent.html" class="btn-giant"><span class="emoji">👂</span>Mode Parent</a>
+      <a href="aide.html" class="btn-giant secondary">❓ Aide &amp; procédure hotspot</a>
+    </div>
+
+    <div class="card">
+      <h2>Avant de commencer</h2>
+      <p class="hint">
+        1. Téléphone <b>bébé</b> : activer le point d'accès WiFi (hotspot) Android, brancher le téléphone sur secteur.<br>
+        2. Téléphone <b>parent</b> : se connecter à ce hotspot (accepter « ce réseau n'a pas accès à Internet »).<br>
+        3. Bébé → « Mode Bébé » → afficher le QR. Parent → « Mode Parent » → scanner le QR, puis montrer le QR réponse au bébé.
+      </p>
+    </div>
+  </div>
+
+  <div id="update-banner" class="update-banner">
+    <span>Nouvelle version disponible.</span>
+    <button>Mettre à jour</button>
+  </div>
+
+  <footer class="app-footer">Fonctionne hors ligne après le premier chargement. Les deux écrans doivent rester allumés.</footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d0f14">
+<title>Babyphone — Mode Parent</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="row-between">
+    <a href="index.html" class="btn">← Accueil</a>
+    <span id="status-badge" class="status-badge"><span class="dot"></span><span id="status-text">Non connecté</span></span>
+  </div>
+
+  <div id="pairing-section" class="card stack">
+    <h2>Appairage</h2>
+    <p class="hint" id="pairing-hint">Scannez le QR affiché par le téléphone bébé.</p>
+    <div id="scan-wrap" class="qr-scan-wrap">
+      <video id="scan-video" autoplay playsinline muted></video>
+    </div>
+    <div id="qr-answer" class="qr-wrap" style="display:none"></div>
+    <button id="btn-restart-pairing" class="btn" style="display:none">↺ Recommencer l'appairage</button>
+  </div>
+
+  <div id="live-section" class="stack" style="display:none; flex:1;">
+    <div class="video-wrap" id="video-wrap">
+      <video id="remote-video" autoplay playsinline></video>
+    </div>
+    <div class="btn-row">
+      <button id="btn-mute" class="btn">🔇 Muet</button>
+      <button id="btn-audio-only" class="btn">🎧 Audio seul</button>
+    </div>
+  </div>
+
+  <div class="flash-noise" id="flash-noise"></div>
+
+  <div class="alarm-fullscreen" id="alarm">
+    <h2>⚠️ CONNEXION PERDUE</h2>
+    <p>Aucune nouvelle du téléphone bébé depuis plus de 10 secondes.</p>
+    <p id="alarm-detail" class="hint"></p>
+    <button id="btn-alarm-stop" class="btn">Couper le son</button>
+    <button id="btn-alarm-repair" class="btn btn-primary">↺ Ré-appairer</button>
+  </div>
+
+  <div id="update-banner" class="update-banner">
+    <span>Nouvelle version disponible.</span>
+    <button>Mettre à jour</button>
+  </div>
+
+  <script src="vendor/pako.min.js"></script>
+  <script src="vendor/qrcode.min.js"></script>
+  <script src="vendor/jsQR.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/qr-transport.js"></script>
+  <script src="js/webrtc-pairing.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/parent.js"></script>
+</body>
+</html>
