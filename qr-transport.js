@@ -1,11 +1,16 @@
 // Transport du signaling WebRTC (offre/réponse SDP) par QR code.
 //
 // Format transporté : JSON {t:'offer'|'answer', s: <sdp>} -> UTF-8 -> deflate
-// brut (pako.deflateRaw, sans en-tête zlib pour gagner quelques octets) ->
-// octets bruts encodés dans le QR en mode "byte" (pas de base64 : on
-// utilise directement result.binaryData renvoyé par jsQR, qui contient les
-// octets tels quels, pour ne jamais faire transiter le binaire par un
-// décodage UTF-8 qui le corromprait).
+// brut (pako.deflateRaw, sans en-tête zlib) -> base64 -> QR en mode texte.
+//
+// Pourquoi base64 (et plus les octets bruts) : la lecture s'appuie EN PRIORITÉ
+// sur l'API native BarcodeDetector (décodeur ZXing/MLKit de l'OS, bien plus
+// robuste que jsQR au flou, aux reflets et au scan écran-vers-écran). Or
+// BarcodeDetector n'expose que rawValue (une chaîne), pas les octets bruts :
+// un payload binaire y serait décodé en UTF-8 et corrompu. On encode donc le
+// binaire compressé en base64 (ASCII sûr), lisible proprement par le décodeur
+// natif ET par jsQR (repli si BarcodeDetector est absent). Coût : +33 % de
+// taille (base64), à compenser ensuite en allégeant le SDP.
 //
 // Pourquoi la compression : une offre WebRTC "brute" (candidats ICE +
 // tous les codecs proposés par défaut) dépasse largement ce qu'un QR peut
@@ -14,16 +19,56 @@
 // d'appeler renderQr ; la compression réduit encore la taille (répétitions
 // de "a=candidate:", "a=rtcp-fb:", etc.).
 const QrTransport = (() => {
-  const MAX_QR_BYTES = 2800; // marge sous le plafond réel (~2953 o, version 40 / EC "L")
+  // Plafond en caractères base64 tenant dans un QR mode octet version 40 / EC "L"
+  // (~2953 o). base64 étant de l'ASCII, 1 caractère = 1 octet dans le QR.
+  const MAX_QR_CHARS = 2900;
 
   function encode(obj) {
     const json = JSON.stringify(obj);
-    return pako.deflateRaw(json);
+    return pako.deflateRaw(json); // Uint8Array
   }
 
-  function decode(bytes) {
+  // bytes (Uint8Array) -> base64. Chunké pour ne pas dépasser la limite
+  // d'arguments de String.fromCharCode sur un gros tableau.
+  function bytesToB64(bytes) {
+    let bin = '';
+    const CHUNK = 0x8000;
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+      bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+    }
+    return btoa(bin);
+  }
+
+  function b64ToBytes(str) {
+    const bin = atob(str);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+
+  // Décode le texte lu dans un QR (base64) vers l'objet {t, s}.
+  function decode(text) {
+    const bytes = b64ToBytes(text);
     const json = pako.inflateRaw(bytes, { to: 'string' });
     return JSON.parse(json);
+  }
+
+  // BarcodeDetector natif si disponible ET gérant le QR ; sinon null (repli
+  // jsQR). Résolu une seule fois puis mémoïsé (getSupportedFormats est async).
+  let _detectorPromise = null;
+  function getDetector() {
+    if (_detectorPromise) return _detectorPromise;
+    _detectorPromise = (async () => {
+      try {
+        if (!('BarcodeDetector' in window)) return null;
+        const formats = await window.BarcodeDetector.getSupportedFormats();
+        if (!formats || !formats.includes('qr_code')) return null;
+        return new window.BarcodeDetector({ formats: ['qr_code'] });
+      } catch (e) {
+        return null;
+      }
+    })();
+    return _detectorPromise;
   }
 
   // Dessine le QR dans containerEl (un <div> vidé puis rempli d'un <canvas>).
@@ -31,16 +76,18 @@ const QrTransport = (() => {
   // un SDP trop volumineux).
   async function renderQr(containerEl, obj) {
     const bytes = encode(obj);
-    if (bytes.length > MAX_QR_BYTES) {
+    const text = bytesToB64(bytes);
+    if (text.length > MAX_QR_CHARS) {
       throw new Error(
-        `Signal trop volumineux pour un QR lisible (${bytes.length} o, max ${MAX_QR_BYTES} o). ` +
+        `Signal trop volumineux pour un QR lisible (${bytes.length} o compressés, ` +
+        `${text.length} car. base64, max ${MAX_QR_CHARS}). ` +
         `Réessayez l'appairage : ICE gathering incomplet ou trop de codecs proposés.`
       );
     }
     containerEl.innerHTML = '';
     const canvas = document.createElement('canvas');
     containerEl.appendChild(canvas);
-    await QRCode.toCanvas(canvas, [{ data: bytes, mode: 'byte' }], {
+    await QRCode.toCanvas(canvas, text, {
       errorCorrectionLevel: 'L',
       margin: 2,
       scale: 6
@@ -80,6 +127,8 @@ const QrTransport = (() => {
     const { signal, onTick } = options;
     return new Promise((resolve, reject) => {
       let done = false;
+      let busy = false;      // une seule analyse de frame en vol à la fois
+      let detector = null;   // BarcodeDetector natif, ou null si repli jsQR
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
@@ -94,28 +143,67 @@ const QrTransport = (() => {
         signal.addEventListener('abort', () => finish(new Error('annulé')));
       }
 
-      requestAnimationFrame(tick);
-
-      function tick() {
-        if (done) return;
-        if (videoEl.readyState === videoEl.HAVE_ENOUGH_DATA && videoEl.videoWidth) {
-          canvas.width = videoEl.videoWidth;
-          canvas.height = videoEl.videoHeight;
-          ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
-          const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const code = jsQR(frame.data, frame.width, frame.height, { inversionAttempts: 'dontInvert' });
-          const detected = !!(code && code.binaryData && code.binaryData.length);
-          if (onTick) onTick(detected);
-          if (detected) {
-            try {
-              const value = decode(new Uint8Array(code.binaryData));
-              return finish(null, value);
-            } catch (e) {
-              // frame lue mais payload corrompu/partiel (reflet, flou) : on continue
-            }
+      // Traite un texte lu ; résout la promesse et renvoie true si le payload
+      // est valide, sinon false (on continue à scanner).
+      function consume(text) {
+        const detected = !!(text && text.length);
+        if (onTick) onTick(detected);
+        if (detected) {
+          try {
+            finish(null, decode(text));
+            return true;
+          } catch (e) {
+            // frame lue mais payload corrompu/partiel (reflet, flou) : on continue
           }
         }
+        return false;
+      }
+
+      // Démarre la boucle seulement une fois qu'on sait si le décodeur natif
+      // est disponible (évite de gaspiller des frames sur jsQR entre-temps).
+      getDetector().then((d) => {
+        detector = d;
         requestAnimationFrame(tick);
+      });
+
+      async function tick() {
+        if (done) return;
+        if (busy || videoEl.readyState !== videoEl.HAVE_ENOUGH_DATA || !videoEl.videoWidth) {
+          return void requestAnimationFrame(tick);
+        }
+        busy = true;
+        try {
+          if (detector) {
+            // Chemin natif : décodage direct sur l'élément <video>.
+            const codes = await detector.detect(videoEl);
+            if (!done) {
+              if (codes && codes.length) {
+                if (consume(codes[0].rawValue)) return;
+              } else if (onTick) {
+                onTick(false);
+              }
+            }
+          } else {
+            // Repli jsQR : rasterisation de la frame puis décodage JS. On tente
+            // les deux polarités (attemptBoth) — plus tolérant que dontInvert.
+            canvas.width = videoEl.videoWidth;
+            canvas.height = videoEl.videoHeight;
+            ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+            const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(frame.data, frame.width, frame.height, { inversionAttempts: 'attemptBoth' });
+            if (!done && consume(code && code.data)) return;
+          }
+        } catch (e) {
+          // detect() peut lever ponctuellement (frame non prête, source refusée).
+          // On abandonne le chemin natif et on bascule sur jsQR pour la suite.
+          if (detector) {
+            console.warn('BarcodeDetector.detect a échoué, repli jsQR', e);
+            detector = null;
+          }
+        } finally {
+          busy = false;
+        }
+        if (!done) requestAnimationFrame(tick);
       }
     });
   }
@@ -138,6 +226,6 @@ const QrTransport = (() => {
 
   return {
     encode, decode, renderQr, openCamera, stopStream,
-    scanFromVideoElement, scanFromCamera, MAX_QR_BYTES
+    scanFromVideoElement, scanFromCamera, MAX_QR_CHARS
   };
 })();

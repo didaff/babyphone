@@ -8,7 +8,7 @@
 // - la page affiche alors une bannière "nouvelle version disponible"
 //   (app.js) ; ce n'est que si l'utilisateur clique "Mettre à jour" que la
 //   page envoie {type:'SKIP_WAITING'} et que le nouveau SW prend le relais.
-const SW_VERSION = 'v3';
+const SW_VERSION = 'v4';
 const CACHE_NAME = 'babyphone-' + SW_VERSION;
 
 const PRECACHE_URLS = [
