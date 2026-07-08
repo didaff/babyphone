@@ -64,6 +64,9 @@
     audioTrack = localStream.getAudioTracks()[0];
     videoTrack = localStream.getVideoTracks()[0];
     updatePreviewStream();
+    // Le bébé scanne le QR réponse du parent avec cette même caméra : force
+    // l'autofocus continu, sinon l'image reste floue sur certains téléphones.
+    QrTransport.applyAutofocus(new MediaStream([videoTrack]));
   }
 
   async function switchCamera() {
@@ -270,6 +273,12 @@
   }
 
   // --- Init -----------------------------------------------------
+
+  // Tap sur l'aperçu caméra = relance de la mise au point (utile au moment de
+  // scanner le QR réponse si l'AF est resté bloqué au loin).
+  els.video.addEventListener('click', () => {
+    if (videoTrack) QrTransport.applyAutofocus(new MediaStream([videoTrack]));
+  }, { passive: true });
 
   els.btnSwitchCam.addEventListener('click', switchCamera);
   els.btnQuality.addEventListener('click', toggleQuality);

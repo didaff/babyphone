@@ -89,7 +89,7 @@ const QrTransport = (() => {
     containerEl.appendChild(canvas);
     await QRCode.toCanvas(canvas, text, {
       errorCorrectionLevel: 'L',
-      margin: 2,
+      margin: 4, // quiet zone standard (4 modules) : nettement mieux détecté qu'à 2
       scale: 6
     });
     // La lib fixe une taille en dur en style inline (ex: width/height: 462px)
@@ -104,13 +104,41 @@ const QrTransport = (() => {
 
   async function openCamera(videoEl, facingMode = 'environment') {
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: facingMode } },
+      video: {
+        facingMode: { ideal: facingMode },
+        // Résolution haute demandée : un flux 640x480 par défaut rend le QR
+        // écran-vers-écran trop mou pour être décodé. On vise du 720p.
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      },
       audio: false
     });
     videoEl.srcObject = stream;
     videoEl.setAttribute('playsinline', ''); // iOS/Android : pas de plein écran auto
     await videoEl.play();
+    applyAutofocus(stream); // best-effort, non bloquant
+    // Tap pour relancer la mise au point : filet de sécurité si l'AF reste
+    // bloqué sur une distance lointaine (fréquent en écran-vers-écran).
+    videoEl.addEventListener('click', () => applyAutofocus(stream), { passive: true });
     return stream;
+  }
+
+  // Force si possible l'autofocus continu sur le flux caméra. Sans ça, certains
+  // téléphones (ex. Galaxy Z Flip sous Chrome) laissent la caméra sur une mise
+  // au point lointaine et le QR reste flou, alors que d'autres (Pixel) scannent
+  // sans problème. Best-effort et silencieux : les contraintes avancées ne sont
+  // pas supportées partout, et un échec ne doit pas bloquer le scan.
+  async function applyAutofocus(stream) {
+    const track = stream && stream.getVideoTracks ? stream.getVideoTracks()[0] : null;
+    if (!track || !track.getCapabilities || !track.applyConstraints) return;
+    try {
+      const caps = track.getCapabilities();
+      if (caps.focusMode && caps.focusMode.includes('continuous')) {
+        await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
+      }
+    } catch (e) {
+      console.warn('autofocus non applicable', e);
+    }
   }
 
   function stopStream(stream) {
@@ -226,6 +254,6 @@ const QrTransport = (() => {
 
   return {
     encode, decode, renderQr, openCamera, stopStream,
-    scanFromVideoElement, scanFromCamera, MAX_QR_CHARS
+    scanFromVideoElement, scanFromCamera, applyAutofocus, MAX_QR_CHARS
   };
 })();
