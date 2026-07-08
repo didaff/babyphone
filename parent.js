@@ -9,6 +9,8 @@
     pairingHint: document.getElementById('pairing-hint'),
     scanWrap: document.getElementById('scan-wrap'),
     scanVideo: document.getElementById('scan-video'),
+    btnPhotoOffer: document.getElementById('btn-photo-offer'),
+    fileOffer: document.getElementById('file-offer'),
     qrAnswer: document.getElementById('qr-answer'),
     btnRestartPairing: document.getElementById('btn-restart-pairing'),
     liveSection: document.getElementById('live-section'),
@@ -24,6 +26,7 @@
   };
 
   let pc = null;
+  let scanAbort = null;
   let remoteStream = null;
   let remoteVideoTrack = null;
   let audioOnly = false;
@@ -112,21 +115,30 @@
     els.pairingSection.style.display = '';
     els.qrAnswer.style.display = 'none';
     els.scanWrap.style.display = '';
+    els.btnPhotoOffer.style.display = '';
     els.pairingHint.textContent = 'Scannez le QR affiché par le téléphone bébé.';
     setStatus('warn', 'Scan du QR bébé…');
 
+    scanAbort = new AbortController();
     let offerValue;
     try {
-      offerValue = await QrTransport.scanFromCamera(els.scanVideo, {});
+      offerValue = await QrTransport.scanFromCamera(els.scanVideo, { signal: scanAbort.signal });
     } catch (e) {
+      if (scanAbort.signal.aborted) return; // basculé sur la photo
       console.warn('scan offre', e);
       setStatus('danger', 'Échec du scan');
       els.pairingHint.textContent = 'Échec du scan (' + e.message + ').';
       els.btnRestartPairing.style.display = '';
       return;
     }
+    await handleOffer(offerValue);
+  }
 
+  // Suite du flux une fois l'offre obtenue (peu importe la source : scan live
+  // ou photo). Crée la réponse et l'affiche en QR.
+  async function handleOffer(offerValue) {
     els.scanWrap.style.display = 'none';
+    els.btnPhotoOffer.style.display = 'none';
     els.pairingHint.textContent = 'QR bébé lu. Génération de la réponse…';
 
     pc = WebrtcPairing.createPeerConnection();
@@ -208,6 +220,29 @@
   }
 
   els.btnRestartPairing.addEventListener('click', restartPairing);
+
+  // Repli photo : délègue à l'appareil photo natif (fiable là où la caméra live
+  // de Chrome échoue sur certains téléphones) puis décode l'image fixe.
+  async function onPhotoOffer() {
+    const file = els.fileOffer.files && els.fileOffer.files[0];
+    els.fileOffer.value = ''; // permet de re-sélectionner la même photo
+    if (!file) return;
+    if (scanAbort) scanAbort.abort(); // stoppe le scan live et ferme la caméra
+    els.pairingHint.textContent = 'Lecture de la photo…';
+    let offerValue;
+    try {
+      offerValue = await QrTransport.scanFromImageFile(file);
+    } catch (e) {
+      console.warn('photo offre', e);
+      setStatus('danger', 'Photo illisible');
+      els.pairingHint.textContent = 'Photo illisible (' + e.message + '). Réessayez.';
+      els.btnRestartPairing.style.display = '';
+      return;
+    }
+    await handleOffer(offerValue);
+  }
+  els.btnPhotoOffer.addEventListener('click', () => els.fileOffer.click());
+  els.fileOffer.addEventListener('change', onPhotoOffer);
 
   // --- Alerte bruit --------------------------------------------------------
 

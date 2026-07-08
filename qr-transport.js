@@ -252,8 +252,46 @@ const QrTransport = (() => {
     }
   }
 
+  // Décode un QR depuis une image fixe (photo prise par l'appareil natif via
+  // un <input type=file capture>). Contourne totalement l'interface caméra live
+  // de Chrome (getUserMedia), défaillante sur certains téléphones (ex. Galaxy
+  // Z Flip : autofocus KO en live alors que l'app photo native lit le QR sans
+  // souci). Une image nette et fixe est bien plus fiable qu'un flux mou.
+  async function scanFromImageFile(file) {
+    const bitmap = await createImageBitmap(file);
+    try {
+      // Chemin natif : BarcodeDetector accepte directement l'ImageBitmap
+      // (pleine résolution = meilleures chances sur un QR dense).
+      const detector = await getDetector();
+      if (detector) {
+        try {
+          const codes = await detector.detect(bitmap);
+          if (codes && codes.length) return decode(codes[0].rawValue);
+        } catch (e) {
+          // repli jsQR ci-dessous
+        }
+      }
+      // Repli jsQR : on sous-échantillonne (une photo 12 Mpx écroulerait jsQR).
+      const MAX = 1600;
+      const scale = Math.min(1, MAX / Math.max(bitmap.width, bitmap.height));
+      const w = Math.max(1, Math.round(bitmap.width * scale));
+      const h = Math.max(1, Math.round(bitmap.height * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(bitmap, 0, 0, w, h);
+      const frame = ctx.getImageData(0, 0, w, h);
+      const code = jsQR(frame.data, frame.width, frame.height, { inversionAttempts: 'attemptBoth' });
+      if (code && code.data) return decode(code.data);
+      throw new Error('aucun QR lisible sur la photo — cadrez bien le QR, sans reflet, et réessayez');
+    } finally {
+      if (bitmap.close) bitmap.close();
+    }
+  }
+
   return {
     encode, decode, renderQr, openCamera, stopStream,
-    scanFromVideoElement, scanFromCamera, applyAutofocus, MAX_QR_CHARS
+    scanFromVideoElement, scanFromCamera, scanFromImageFile, applyAutofocus, MAX_QR_CHARS
   };
 })();
